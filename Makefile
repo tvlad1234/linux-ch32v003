@@ -13,3 +13,8 @@ include $(CH32V003FUN)/ch32v003fun.mk
 flash : cv_flash
 clean : cv_clean
 
+linux : 
+	make -C linux
+
+
+.PHONY: linux

@@ -1,5 +1,7 @@
 .vscode/
 
+linux/buildroot
+
 *.bin
 *.elf
 *.hex
