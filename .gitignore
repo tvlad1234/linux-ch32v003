@@ -1,5 +1,8 @@
 .vscode/
 
+hardware/*-backups
+hardware/*.kicad_prl
+
 linux/buildroot
 
 *.bin

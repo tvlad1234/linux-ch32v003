@@ -8,6 +8,8 @@ This project uses the [ch32v003fun](https://github.com/cnlohr/ch32v003fun) SDK, 
 
 The PSRAM and SD card are connected to the hardware SPI interface of the CH32V003. The chip select pins can be set in the [thing_config.h](thing_config.h) file. The console can be accessed over the UART pins. The SD card containing the [Linux image file](Image) must be formatted as FAT32 or FAT16, and the file must be placed in the root. 
 
+A suggested schematic and corresponding single-layer PCB design can be found in the [hardware](hardware) folder (it's a KiCad 7 project).
+
 Boot time is around 5 minutes. The Linux image includes the coremark benchmark in the `/root/` folder.
 
 ## Building the Linux image
