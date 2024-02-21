@@ -30,20 +30,10 @@
 
 #include "thing_config.h"
 #include "ch32v003fun.h"
+#include "hw_spi.h"
 
 #define DLY_US(n)	Delay_Us(n)	/* Delay n microseconds */
 #define	FORWARD(d)		/* Data in-time processing function (depends on the project) */
-
-#define DO_INIT()					/* Initialize port for MMC DO as input */
-#define DO			( ( SD_RX_GPIO->INDR >> SD_RX_PIN ) & 0b1 )	/* Test for MMC DO ('H':true, 'L':false) */
-
-#define DI_INIT()	
-#define DI_H()		SD_TX_GPIO->BSHR = ( 1 << SD_TX_PIN )
-#define DI_L()		SD_TX_GPIO->BSHR = ( 1 << ( 16 + SD_TX_PIN ) )
-
-#define CK_INIT()	
-#define CK_H()		SD_CLK_GPIO->BSHR = ( 1 << SD_CLK_PIN )
-#define	CK_L()		SD_CLK_GPIO->BSHR = ( 1 << ( 16 + SD_CLK_PIN ) )
 
 #define CS_INIT()	
 #define	CS_H()		SD_CS_GPIO->BSHR = ( 1 << SD_CS_PIN )
@@ -87,22 +77,7 @@ void xmit_mmc (
 	BYTE d			/* Data to be sent */
 )
 {
-	if (d & 0x80) DI_H(); else DI_L();	/* bit7 */
-	CK_H(); CK_L();
-	if (d & 0x40) DI_H(); else DI_L();	/* bit6 */
-	CK_H(); CK_L();
-	if (d & 0x20) DI_H(); else DI_L();	/* bit5 */
-	CK_H(); CK_L();
-	if (d & 0x10) DI_H(); else DI_L();	/* bit4 */
-	CK_H(); CK_L();
-	if (d & 0x08) DI_H(); else DI_L();	/* bit3 */
-	CK_H(); CK_L();
-	if (d & 0x04) DI_H(); else DI_L();	/* bit2 */
-	CK_H(); CK_L();
-	if (d & 0x02) DI_H(); else DI_L();	/* bit1 */
-	CK_H(); CK_L();
-	if (d & 0x01) DI_H(); else DI_L();	/* bit0 */
-	CK_H(); CK_L();
+	SPI_transfer_8(d);
 }
 
 
@@ -114,27 +89,7 @@ void xmit_mmc (
 static
 BYTE rcvr_mmc (void)
 {
-	BYTE r;
-
-
-	DI_H();	/* Send 0xFF */
-
-	r = 0;   if (DO) r++;	/* bit7 */
-	CK_H(); CK_L();
-	r <<= 1; if (DO) r++;	/* bit6 */
-	CK_H(); CK_L();
-	r <<= 1; if (DO) r++;	/* bit5 */
-	CK_H(); CK_L();
-	r <<= 1; if (DO) r++;	/* bit4 */
-	CK_H(); CK_L();
-	r <<= 1; if (DO) r++;	/* bit3 */
-	CK_H(); CK_L();
-	r <<= 1; if (DO) r++;	/* bit2 */
-	CK_H(); CK_L();
-	r <<= 1; if (DO) r++;	/* bit1 */
-	CK_H(); CK_L();
-	r <<= 1; if (DO) r++;	/* bit0 */
-	CK_H(); CK_L();
+	BYTE r = SPI_transfer_8(0xFF);
 
 	return r;
 }
@@ -150,18 +105,9 @@ void skip_mmc (
 	UINT n		/* Number of bytes to skip */
 )
 {
-	DI_H();	/* Send 0xFF */
-
 	do {
-		CK_H(); CK_L();
-		CK_H(); CK_L();
-		CK_H(); CK_L();
-		CK_H(); CK_L();
-		CK_H(); CK_L();
-		CK_H(); CK_L();
-		CK_H(); CK_L();
-		CK_H(); CK_L();
-	} while (--n);
+		SPI_transfer_8(0xFF);
+	} while (--n);	
 }
 
 
@@ -189,7 +135,6 @@ BYTE send_cmd (
 )
 {
 	BYTE n, res;
-
 
 	if (cmd & 0x80) {	/* ACMD<n> is the command sequense of CMD55-CMD<n> */
 		cmd &= 0x7F;
@@ -239,21 +184,7 @@ DSTATUS disk_initialize (void)
 	BYTE n, cmd, ty, buf[4];
 	UINT tmr;
 
-
-	// INIT_PORT();
-
-	// SPI Clock Push-Pull
-	SD_CLK_GPIO->CFGLR &= ~( 0xf << ( 4 * SD_CLK_PIN ) );
-	SD_CLK_GPIO->CFGLR |= ( GPIO_Speed_50MHz | GPIO_CNF_OUT_PP ) << ( 4 * SD_CLK_PIN );
-
-	// SPI TX Push-Pull
-	SD_TX_GPIO->CFGLR &= ~( 0xf << ( 4 * SD_TX_PIN ) );
-	SD_TX_GPIO->CFGLR |= ( GPIO_Speed_50MHz | GPIO_CNF_OUT_PP ) << ( 4 * SD_TX_PIN );
-
-	// SPI RX floating
-	SD_RX_GPIO->CFGLR &= ~( 0xf << ( 4 * SD_RX_PIN ) );
-	SD_RX_GPIO->CFGLR |= ( GPIO_Speed_In | GPIO_CNF_IN_FLOATING ) << ( 4 * SD_RX_PIN );
-	// SD_GPIO->BSHR = ( 1 << SD_RX_PIN );
+	SPI_set_prescaler(7);
 
 	// SD Card CS Push-Pull
 	SD_CS_GPIO->CFGLR &= ~( 0xf << ( 4 * SD_CS_PIN ) );
@@ -293,6 +224,7 @@ DSTATUS disk_initialize (void)
 	CardType = ty;
 	release_spi();
 
+	SPI_set_prescaler(0);
 	return ty ? 0 : STA_NOINIT;
 }
 

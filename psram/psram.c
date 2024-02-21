@@ -3,13 +3,7 @@
 #include "ch32v003fun.h"
 #include "thing_config.h"
 
-#define CH32V003_SPI_SPEED_HZ 24000000
-#define CH32V003_SPI_DIRECTION_2LINE_TXRX
-#define CH32V003_SPI_CLK_MODE_POL0_PHA0		//leading = rising		trailing = falling		sample on leading		default if you're unsure
-#define CH32V003_SPI_NSS_SOFTWARE_ANY_MANUAL	// toggle manually!
-#define CH32V003_SPI_IMPLEMENTATION
-
-#include "../extralibs/ch32v003_SPI.h"
+#include "hw_spi.h"
 
 #define PSRAM_CMD_RES_EN 0x66
 #define PSRAM_CMD_RESET 0x99
@@ -62,9 +56,6 @@ void psram_read_id( uint8_t *dst )
 
 int psram_init()
 {
-	SPI_init();
-	SPI_begin_8();
-	
 	// PSRAM CS Push-Pull
 	PSRAM_GPIO->CFGLR &= ~( 0xf << ( 4 * PSRAM_CS_PIN ) );
 	PSRAM_GPIO->CFGLR |= ( GPIO_Speed_50MHz | GPIO_CNF_OUT_PP ) << ( 4 * PSRAM_CS_PIN );

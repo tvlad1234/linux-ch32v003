@@ -6,7 +6,7 @@ This project enables the CH32V003 microcontroller to run Linux. It achieves this
 ## How to use
 This project uses the [ch32v003fun](https://github.com/cnlohr/ch32v003fun) SDK, which must reside in the same folder where this repository was cloned.
 
-The PSRAM is connected to the hardware SPI interface of the CH32V003. The chip select pin of the PSRAM, as well as the pins for the SD card can be configured in the [thing_config.h](thing_config.h) file. The console can be accessed over the UART pins. The SD card containing the [Linux image file](Image) must be formatted as FAT32 or FAT16, and the file must be placed in the root. 
+The PSRAM and SD card are connected to the hardware SPI interface of the CH32V003. The chip select pins can be set in the [thing_config.h](thing_config.h) file. The console can be accessed over the UART pins. The SD card containing the [Linux image file](Image) must be formatted as FAT32 or FAT16, and the file must be placed in the root. 
 
 Boot time is around 5 minutes. The Linux image includes the coremark benchmark in the `/root/` folder.
 

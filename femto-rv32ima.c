@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "emulator.h"
+#include "hw_spi.h"
 #include "pff/pff.h"
 #include "psram.h"
 #include "thing_config.h"
@@ -13,10 +14,14 @@ void load_sd_file( uint32_t addr, const char filename[] );
 int main()
 {
 	SystemInit();
-
+	
 	// Enable GPIOs
 	RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC;
 	USART1->CTLR1 |= USART_CTLR1_RE;
+
+	// Enable SPI
+	SPI_init();
+	SPI_begin_8();
 
 	Delay_Ms( 1000 );
 
@@ -31,6 +36,7 @@ int main()
 	else printf( "PSRAM init ok!\n\r" );
 
 	load_sd_file( 0, IMAGE_FILENAME );
+
 	puts( "\nStarting RISC-V VM\n\n\r" );
 	int c = riscv_emu();
 	while ( c == EMU_REBOOT ) c = riscv_emu();
