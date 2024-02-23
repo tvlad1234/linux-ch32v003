@@ -2,12 +2,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "emulator.h"
 #include "psram.h"
 #include "thing_config.h"
 
 #include "default64mbdtc.h"
+
+#define KEY_QUEUE_LEN 16
+char key_queue[KEY_QUEUE_LEN + 1];
+uint8_t keys_num;
 
 int time_divisor = 256;
 uint8_t fast_mode = 0;
@@ -21,8 +26,8 @@ static uint32_t HandleOtherCSRRead( uint8_t *image, uint16_t csrno );
 #define INSTRS_PER_FLIP 1024
 
 #define MICROSECOND_TICKS ( SysTick->CNT / DELAY_US_TIME )
-#define KEYPRESS_AVAILABLE ( USART1->STATR & USART_FLAG_RXNE )
-#define LAST_KEYPRESS ( USART1->DATAR )
+#define SERIAL_AVAILABLE ( USART1->STATR & USART_FLAG_RXNE )
+#define LAST_SERIAL ( USART1->DATAR )
 
 #define MINIRV32WARN( x... ) printf( x );
 #define MINIRV32_DECORATE static
@@ -111,6 +116,10 @@ int riscv_emu()
 	
 	for ( rt = 0; rt < instct + 1 || instct < 0; rt += INSTRS_PER_FLIP )
 	{
+
+		if(SERIAL_AVAILABLE && keys_num <= KEY_QUEUE_LEN)
+			key_queue[keys_num++] = LAST_SERIAL;
+
 		if(fast_mode ==  1)
 		{
 			time_divisor = 8;
@@ -178,10 +187,13 @@ static inline uint32_t HandleOtherCSRRead( uint8_t *image, uint16_t csrno )
 {
 	if ( csrno == 0x140 )
 	{
-		if( KEYPRESS_AVAILABLE )
+		if( keys_num )
 		{
+			char c = key_queue[0];
+			keys_num--;
+			strcpy(key_queue, key_queue+1);
 			fast_mode++;
-			return LAST_KEYPRESS;
+			return c;
 		}
 		else return -1;
 	}
