@@ -19,11 +19,21 @@ int main()
 	RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC;
 	USART1->CTLR1 |= USART_CTLR1_RE;
 
+	// PSRAM CS Push-Pull
+	PSRAM_GPIO->CFGLR &= ~( 0xf << ( 4 * PSRAM_CS_PIN ) );
+	PSRAM_GPIO->CFGLR |= ( GPIO_Speed_50MHz | GPIO_CNF_OUT_PP ) << ( 4 * PSRAM_CS_PIN );
+	PSRAM_GPIO->BSHR = ( 1 << PSRAM_CS_PIN );
+
+	// SD Card CS Push-Pull
+	SD_CS_GPIO->CFGLR &= ~( 0xf << ( 4 * SD_CS_PIN ) );
+	SD_CS_GPIO->CFGLR |= ( GPIO_Speed_50MHz | GPIO_CNF_OUT_PP ) << ( 4 * SD_CS_PIN );
+	SD_CS_GPIO->BSHR = ( 1 << SD_CS_PIN );
+
 	// Enable SPI
 	SPI_init();
 	SPI_begin_8();
 
-	Delay_Ms( 1000 );
+	Delay_Ms( 2000 );
 
 	printf("\n\rfemto-rv32ima, compiled %s\n\r", __TIMESTAMP__);
 

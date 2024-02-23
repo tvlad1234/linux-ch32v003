@@ -56,9 +56,6 @@ void psram_read_id( uint8_t *dst )
 
 int psram_init()
 {
-	// PSRAM CS Push-Pull
-	PSRAM_GPIO->CFGLR &= ~( 0xf << ( 4 * PSRAM_CS_PIN ) );
-	PSRAM_GPIO->CFGLR |= ( GPIO_Speed_50MHz | GPIO_CNF_OUT_PP ) << ( 4 * PSRAM_CS_PIN );
 	PSRAM_DESEL;
 	Delay_Ms(10);
 

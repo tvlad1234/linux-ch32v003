@@ -1,28 +1,18 @@
 /*------------------------------------------------------------------------/
-/  Bitbanging MMCv3/SDv1/SDv2 (in SPI mode) control module for PFF
+/  MMCv3/SDv1/SDv2 (in SPI mode) control module for PFF
 /-------------------------------------------------------------------------/
 /
 /  Copyright (C) 2014, ChaN, all right reserved.
+/  Copyright (C) 2024, tvlad1234, all right reserved.
 /
 / * This software is a free software and there is NO WARRANTY.
 / * No restriction on use. You can use, modify and redistribute it for
 /   personal, non-profit or commercial products UNDER YOUR RESPONSIBILITY.
 / * Redistributions of source code must retain the above copyright notice.
 /
-/--------------------------------------------------------------------------/
- Features:
-
- * Very Easy to Port
-   It uses only 4-6 bit of GPIO port. No interrupt, no SPI port is used.
-
- * Platform Independent
-   You need to modify only a few macros to control GPIO ports.
-
-/-------------------------------------------------------------------------*/
-
+/--------------------------------------------------------------------------*/
 
 #include "diskio.h"
-
 
 /*-------------------------------------------------------------------------*/
 /* Platform dependent macros and functions needed to be modified           */
@@ -35,10 +25,8 @@
 #define DLY_US(n)	Delay_Us(n)	/* Delay n microseconds */
 #define	FORWARD(d)		/* Data in-time processing function (depends on the project) */
 
-#define CS_INIT()	
 #define	CS_H()		SD_CS_GPIO->BSHR = ( 1 << SD_CS_PIN )
 #define CS_L()		SD_CS_GPIO->BSHR = ( 1 << ( 16 + SD_CS_PIN ) )
-
 
 
 /*--------------------------------------------------------------------------
@@ -69,7 +57,7 @@ static
 BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
 
 /*-----------------------------------------------------------------------*/
-/* Transmit a byte to the MMC (bitbanging)                               */
+/* Transmit a byte to the MMC                                            */
 /*-----------------------------------------------------------------------*/
 
 static
@@ -81,9 +69,8 @@ void xmit_mmc (
 }
 
 
-
 /*-----------------------------------------------------------------------*/
-/* Receive a byte from the MMC (bitbanging)                              */
+/* Receive a byte from the MMC                                           */
 /*-----------------------------------------------------------------------*/
 
 static
@@ -95,9 +82,8 @@ BYTE rcvr_mmc (void)
 }
 
 
-
 /*-----------------------------------------------------------------------*/
-/* Skip bytes on the MMC (bitbanging)                                    */
+/* Skip bytes on the MMC                                                 */
 /*-----------------------------------------------------------------------*/
 
 static
@@ -109,7 +95,6 @@ void skip_mmc (
 		SPI_transfer_8(0xFF);
 	} while (--n);	
 }
-
 
 
 /*-----------------------------------------------------------------------*/
@@ -167,7 +152,6 @@ BYTE send_cmd (
 }
 
 
-
 /*--------------------------------------------------------------------------
 
    Public Functions
@@ -185,10 +169,6 @@ DSTATUS disk_initialize (void)
 	UINT tmr;
 
 	SPI_set_prescaler(7);
-
-	// SD Card CS Push-Pull
-	SD_CS_GPIO->CFGLR &= ~( 0xf << ( 4 * SD_CS_PIN ) );
-	SD_CS_GPIO->CFGLR |= ( GPIO_Speed_50MHz | GPIO_CNF_OUT_PP ) << ( 4 * SD_CS_PIN );
 
 	CS_H();
 	skip_mmc(10);			/* Dummy clocks */
@@ -227,7 +207,6 @@ DSTATUS disk_initialize (void)
 	SPI_set_prescaler(0);
 	return ty ? 0 : STA_NOINIT;
 }
-
 
 
 /*-----------------------------------------------------------------------*/
@@ -286,7 +265,6 @@ DRESULT disk_readp (
 
 	return res;
 }
-
 
 
 /*-----------------------------------------------------------------------*/
