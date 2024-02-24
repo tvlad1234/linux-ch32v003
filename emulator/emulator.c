@@ -10,9 +10,8 @@
 
 #include "default64mbdtc.h"
 
-#define KEY_QUEUE_LEN 16
-char key_queue[KEY_QUEUE_LEN + 1];
-uint8_t keys_num;
+volatile extern char key_queue[KEY_QUEUE_LEN + 1];
+volatile extern uint8_t keys_num;
 
 int time_divisor = 256;
 uint8_t fast_mode = 0;
@@ -24,10 +23,7 @@ static void HandleOtherCSRWrite( uint8_t *image, uint16_t csrno, uint32_t value 
 static uint32_t HandleOtherCSRRead( uint8_t *image, uint16_t csrno );
 
 #define INSTRS_PER_FLIP 1024
-
 #define MICROSECOND_TICKS ( SysTick->CNT / DELAY_US_TIME )
-#define SERIAL_AVAILABLE ( USART1->STATR & USART_FLAG_RXNE )
-#define LAST_SERIAL ( USART1->DATAR )
 
 #define MINIRV32WARN( x... ) printf( x );
 #define MINIRV32_DECORATE static
@@ -116,17 +112,9 @@ int riscv_emu()
 	
 	for ( rt = 0; rt < instct + 1 || instct < 0; rt += INSTRS_PER_FLIP )
 	{
-
-		if(SERIAL_AVAILABLE && keys_num <= KEY_QUEUE_LEN)
-			key_queue[keys_num++] = LAST_SERIAL;
-
-		if(fast_mode ==  1)
-		{
+		if(fast_mode)
 			time_divisor = 8;
-			fast_mode = 2;
-			puts("\n\rEMU: Fast mode engaged!\n\r");
-		}
-			
+
 		uint64_t *this_ccount = ( (uint64_t *)&core.cyclel );
 
 		uint32_t elapsedUs = MICROSECOND_TICKS / time_divisor - lastTime;

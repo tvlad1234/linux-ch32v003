@@ -17,4 +17,7 @@
 // RAM size in megabytes
 #define EMULATOR_RAM_MB 8
 
+// Keyboard queue length
+#define KEY_QUEUE_LEN 16
+
 #endif

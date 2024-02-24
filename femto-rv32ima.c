@@ -17,7 +17,6 @@ int main()
 	
 	// Enable GPIOs
 	RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC;
-	USART1->CTLR1 |= USART_CTLR1_RE;
 
 	// PSRAM CS Push-Pull
 	PSRAM_GPIO->CFGLR &= ~( 0xf << ( 4 * PSRAM_CS_PIN ) );
@@ -29,21 +28,26 @@ int main()
 	SD_CS_GPIO->CFGLR |= ( GPIO_Speed_50MHz | GPIO_CNF_OUT_PP ) << ( 4 * SD_CS_PIN );
 	SD_CS_GPIO->BSHR = ( 1 << SD_CS_PIN );
 
+	// Enable UART receive and receive interrupt
+	USART1->CTLR1 |= USART_CTLR1_RE | USART_CTLR1_RXNEIE;
+	NVIC_EnableIRQ(USART1_IRQn);
+
 	// Enable SPI
 	SPI_init();
 	SPI_begin_8();
 
 	Delay_Ms( 2000 );
 
+	printf("\033[2J\033[1;1H"); // clear terminal
 	printf("\n\rfemto-rv32ima, compiled %s\n\r", __TIMESTAMP__);
 
 	if ( psram_init() )
 	{
-		printf( "PSRAM init failed.\n\r" );
+		printf( "PSRAM init failed!\n\r" );
 		while ( 1 )
 			;
 	}
-	else printf( "PSRAM init ok!\n\r" );
+	else printf( "%d MB PSRAM OK!\n\r", EMULATOR_RAM_MB);
 
 	load_sd_file( 0, IMAGE_FILENAME );
 
@@ -55,7 +59,19 @@ int main()
 		;
 }
 
+// UART queue
+volatile char key_queue[KEY_QUEUE_LEN + 1]; 
+volatile uint8_t keys_num;
 
+// UART receive interrupt handler
+void USART1_IRQHandler( void ) __attribute__((interrupt));
+void USART1_IRQHandler( void )
+{
+	if(keys_num <= KEY_QUEUE_LEN)
+		key_queue[keys_num++] =  USART1->DATAR;
+}
+
+// SD card file loading functions
 void die( FRESULT rc )
 {
 	printf( "Failed with rc=%u.\n", rc );
@@ -78,13 +94,28 @@ void load_sd_file( uint32_t addr, const char filename[] )
 	if ( rc ) die( rc );
 
 	printf( "Loading image into RAM\n\r" );
+
+	uint32_t total_bytes = 0;
+	uint8_t cnt = 0;
+	const char spinner[] = "/-\\|";
+
 	for ( ;; )
 	{
 		rc = pf_read( buff, sizeof( buff ), &br ); /* Read a chunk of file */
 		if ( rc || !br ) break; /* Error or end of file */
 
 		psram_write( addr, buff, br );
+		total_bytes += br;
 		addr += br;
+
+		if(total_bytes % (16*1024) == 0){
+			cnt++;
+			printf("%d kb so far...  ", total_bytes/1024);
+			putchar(spinner[cnt%4]);
+			putchar('\r');
+		}
+
 	}
 	if ( rc ) die( rc );
+	printf("\n\rLoaded %d kilobytes.\n\r", total_bytes/1024);
 }
