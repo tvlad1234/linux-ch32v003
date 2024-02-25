@@ -72,7 +72,7 @@
           (number "2" (effects (font (size 1.27 1.27))))
         )
         (pin bidirectional line (at 17.78 -20.32 180) (length 2.54)
-          (name "PD1_A4_T1CH2" (effects (font (size 1.27 1.27))))
+          (name "PD3_A4_T1CH2" (effects (font (size 1.27 1.27))))
           (number "20" (effects (font (size 1.27 1.27))))
         )
         (pin bidirectional line (at 17.78 20.32 180) (length 2.54)
