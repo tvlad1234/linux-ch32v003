@@ -7,7 +7,12 @@
 
 #define FUNCONF_USE_DEBUGPRINTF 0
 #define FUNCONF_USE_UARTPRINTF  1
+
+#if defined(BOARD_CHINOOK)
+#define FUNCONF_UART_PRINTF_BAUD 38400
+#else
 #define FUNCONF_UART_PRINTF_BAUD 115200
+#endif
 
 #define CH32V003           1
 

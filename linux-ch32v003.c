@@ -75,6 +75,14 @@ void gpio_init(void)
 	// MISO on PC7, 10MHz input, floating
 	GPIOC->CFGLR &= ~(0xf << (4 * 7));
 	GPIOC->CFGLR |= GPIO_CNF_IN_FLOATING << (4 * 7);
+
+#if defined(BOARD_CHINOOK)
+	// set HCEN high (HC-05 data mode)
+	HCEN_GPIO->CFGLR &= ~(0xf << (4 * HCEN_PIN));
+	HCEN_GPIO->CFGLR |= (GPIO_Speed_50MHz | GPIO_CNF_OUT_PP) << (4 * HCEN_PIN);
+	HCEN_GPIO->BSHR = (1 << HCEN_PIN);
+#endif
+
 }
 
 void systick_init(void)
